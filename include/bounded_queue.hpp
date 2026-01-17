@@ -16,10 +16,15 @@ public:
         std::unique_lock<std::mutex> lock(mtx_);
         not_full_cv_.wait(lock, [this] { return count_ < capacity_ || closed_; });
         if (closed_) return false;
+        
+        bool was_empty = (count_ == 0); // Optimization: Check state before update
+        
         buffer_[tail_] = item;
         tail_ = (tail_ + 1) % capacity_;
         ++count_;
-        not_empty_cv_.notify_one();
+        
+        lock.unlock(); // Unlock before notifying to reduce contention
+        if (was_empty) not_empty_cv_.notify_one(); // Only notify if consumer might be sleeping
         return true;
     }
 
@@ -27,10 +32,15 @@ public:
         std::unique_lock<std::mutex> lock(mtx_);
         not_empty_cv_.wait(lock, [this] { return count_ > 0 || closed_; });
         if (count_ == 0 && closed_) return false;
+        
+        bool was_full = (count_ == capacity_); // Optimization: Check state before update
+        
         out = buffer_[head_];
         head_ = (head_ + 1) % capacity_;
         --count_;
-        not_full_cv_.notify_one();
+        
+        lock.unlock(); // Unlock before notifying
+        if (was_full) not_full_cv_.notify_one(); // Only notify if producer might be sleeping
         return true;
     }
 

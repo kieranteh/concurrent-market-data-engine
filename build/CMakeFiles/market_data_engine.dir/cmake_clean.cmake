@@ -3,6 +3,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/market_data_engine.dir/src/main.cpp.obj.d"
   "CMakeFiles/market_data_engine.dir/src/metrics.cpp.obj"
   "CMakeFiles/market_data_engine.dir/src/metrics.cpp.obj.d"
+  "CMakeFiles/market_data_engine.dir/src/order_book.cpp.obj"
+  "CMakeFiles/market_data_engine.dir/src/order_book.cpp.obj.d"
   "libmarket_data_engine.dll.a"
   "market_data_engine.exe"
   "market_data_engine.exe.manifest"

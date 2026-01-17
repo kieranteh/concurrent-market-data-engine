@@ -176,6 +176,30 @@ src/metrics.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\market_data_engine.dir\build.make CMakeFiles/market_data_engine.dir/src/metrics.cpp.s
 .PHONY : src/metrics.cpp.s
 
+src/order_book.obj: src/order_book.cpp.obj
+.PHONY : src/order_book.obj
+
+# target to build an object file
+src/order_book.cpp.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\market_data_engine.dir\build.make CMakeFiles/market_data_engine.dir/src/order_book.cpp.obj
+.PHONY : src/order_book.cpp.obj
+
+src/order_book.i: src/order_book.cpp.i
+.PHONY : src/order_book.i
+
+# target to preprocess a source file
+src/order_book.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\market_data_engine.dir\build.make CMakeFiles/market_data_engine.dir/src/order_book.cpp.i
+.PHONY : src/order_book.cpp.i
+
+src/order_book.s: src/order_book.cpp.s
+.PHONY : src/order_book.s
+
+# target to generate assembly for a file
+src/order_book.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\market_data_engine.dir\build.make CMakeFiles/market_data_engine.dir/src/order_book.cpp.s
+.PHONY : src/order_book.cpp.s
+
 # Help Target
 help:
 	@echo The following are some of the valid targets for this Makefile:
@@ -191,6 +215,9 @@ help:
 	@echo ... src/metrics.obj
 	@echo ... src/metrics.i
 	@echo ... src/metrics.s
+	@echo ... src/order_book.obj
+	@echo ... src/order_book.i
+	@echo ... src/order_book.s
 .PHONY : help
 
 
