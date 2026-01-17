@@ -4,11 +4,15 @@
 
 using namespace std;
 
+enum class Side : uint8_t { Buy, Sell };
+
 struct Event {
     uint64_t id;
     uint64_t t0_ns;
     uint32_t symbol_id;
     double price;
+    uint32_t quantity;
+    Side side;
 };
 
 inline uint64_t now_ns() {
