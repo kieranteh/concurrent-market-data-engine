@@ -48,7 +48,7 @@ void producer(int producer_id, vector<unique_ptr<EventQueue>>& queues) {
         // OPTIMISATION: Round price to 2 decimal places (cents).
         // This prevents the OrderBook map from growing infinitely with unique doubles,
         // simulating real market ticks and keeping cache performance high.
-        e.price = std::round(price_dist(rng) * 100.0) / 100.0;
+        e.price = round(price_dist(rng) * 100.0) / 100.0;
         e.quantity = qty_dist(rng);
         e.side = static_cast<Side>(side_dist(rng));
 

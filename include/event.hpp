@@ -16,7 +16,7 @@ struct Event {
 };
 
 inline uint64_t now_ns() {
-    return chrono::duration_cast<std::chrono::nanoseconds>(
+    return chrono::duration_cast<chrono::nanoseconds>(
         chrono::steady_clock::now().time_since_epoch()
     ).count();
 }

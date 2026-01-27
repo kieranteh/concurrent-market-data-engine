@@ -22,7 +22,7 @@ void OrderBook::add_order(const Event& e) {
     }
 }
 
-std::pair<double, double> OrderBook::get_top_of_book() const {
+pair<double, double> OrderBook::get_top_of_book() const {
     // Convert indices back to price
     double best_bid = (best_bid_idx_ == -1) ? 0.0 : (best_bid_idx_ / 100.0);
     double best_ask = (best_ask_idx_ >= static_cast<int>(MAX_PRICE_TICKS)) ? 0.0 : (best_ask_idx_ / 100.0);
