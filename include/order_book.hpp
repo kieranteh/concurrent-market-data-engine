@@ -10,7 +10,8 @@ using namespace std;
 class OrderBook {
 public:
     OrderBook();
-    void add_order(const Event& e);
+    // Returns a vector of executed trades if the order crosses the spread
+    vector<Trade> add_order(const Event& e);
     
     // Returns the Best Bid and Best Ask prices
     // Returns {0.0, 0.0} if side is empty

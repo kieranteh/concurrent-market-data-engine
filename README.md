@@ -1,11 +1,12 @@
-# Concurrent Market Data Event Processing Engine
+# Concurrent Market Data & Matching Engine
 
-A high-performance C++20 market data engine simulating a low-latency trading pipeline. It uses a **sharded producer-consumer architecture** to enable lock-free Order Book processing and achieves microsecond-level latency.
+A high-performance C++20 market data and matching engine simulating a low-latency exchange. It uses a **sharded producer-consumer architecture** to enable lock-free Order Book processing and achieves microsecond-level latency.
 
 ## What is this?
-This project simulates a High-Frequency Trading (HFT) engine. It generates synthetic market data (Bids/Asks) and routes them to consumers based on Symbol ID (**Sharding**).
+This project simulates a High-Frequency Trading (HFT) exchange component. It generates synthetic market orders (Bids/Asks), routes them to consumers based on Symbol ID (**Sharding**), and executes trades when prices cross.
 
 ### Key Features
+*   **Matching Engine Logic:** Implements a Limit Order Book that executes trades when a Buy order crosses the Best Ask (or vice versa). Tracks executed volume and updates book liquidity.
 *   **Sharded Architecture:** Events are hashed by Symbol ID to specific queues. This guarantees strict ordering per symbol and allows the `OrderBook` to be updated without locks (Single Writer Principle).
 *   **O(1) Order Book:** Replaced standard `std::map` with a flat vector (Direct Address Table) for constant-time insertions and updates, maximizing CPU cache locality.
 *   **Optimized Bounded Queue:** Uses `std::mutex` and `std::condition_variable` with **conditional notification** (only waking threads when necessary) to minimize system calls and jitter.
@@ -29,6 +30,7 @@ cmake --build build
 ```
 Duration: 10.00 s
 Produced: 12345678, Processed: 12345678
+Trades Executed: 45231
 Throughput: 1234567.89 events/sec
 p50 latency: 12 us
 p99 latency: 45 us

@@ -28,6 +28,7 @@ constexpr int NUM_CONSUMERS = 4; // Reduced to prevent CPU oversubscription
 alignas(64) atomic<bool> stop_flag{false};
 alignas(64) atomic<uint64_t> total_produced{0};
 alignas(64) atomic<uint64_t> total_processed{0};
+alignas(64) atomic<uint64_t> total_trades{0};
 
 
 void producer(int producer_id, vector<unique_ptr<EventQueue>>& queues) {
@@ -73,6 +74,8 @@ void consumer(EventQueue& queue, vector<uint64_t>& latencies) {
 
     Event e;
     uint64_t local_processed_count = 0;
+    uint64_t local_trade_count = 0;
+
     while (queue.pop(e)) {
         if (latencies.size() < max_samples) {
             uint64_t latency = now_ns() - e.t0_ns;
@@ -80,12 +83,14 @@ void consumer(EventQueue& queue, vector<uint64_t>& latencies) {
         }
         
         // Process business logic
-        books[e.symbol_id].add_order(e);
+        vector<Trade> trades = books[e.symbol_id].add_order(e);
+        local_trade_count += trades.size();
 
         // Batch atomic updates
         if (++local_processed_count % 1024 == 0) total_processed.fetch_add(1024, memory_order_relaxed);
     }
     total_processed.fetch_add(local_processed_count % 1024, memory_order_relaxed);
+    total_trades.fetch_add(local_trade_count, memory_order_relaxed);
 }
 
 void stats_printer(atomic<bool>& stop_flag, atomic<uint64_t>& total_processed) {
@@ -140,6 +145,7 @@ int main() {
     cout << fixed << setprecision(2);
     cout << "Duration: " << duration << " s\n";
     cout << "Produced: " << total_produced << ", Processed: " << total_processed << "\n";
+    cout << "Trades Executed: " << total_trades << "\n";
     cout << "Throughput: " << metrics.throughput << " events/sec\n";
     cout << "p50 latency: " << metrics.p50_us << " us\n";
     cout << "p99 latency: " << metrics.p99_us << " us\n";
