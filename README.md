@@ -1,43 +1,60 @@
-# Concurrent Market Data & Matching Engine
+# Concurrent Market Data Engine
 
-A high-performance C++20 market data and matching engine simulating a low-latency exchange. It uses a **sharded producer-consumer architecture** to enable lock-free Order Book processing and achieves microsecond-level latency.
+A high-performance, concurrent market data processing engine built with C++, visualized in real-time using a Node.js backend and React frontend.
 
-## What is this?
-This project simulates a High-Frequency Trading (HFT) exchange component. It generates synthetic market orders (Bids/Asks), routes them to consumers based on Symbol ID (**Sharding**), and executes trades when prices cross.
+## Overview
 
-### Key Features
-*   **Matching Engine Logic:** Implements a Limit Order Book that executes trades when a Buy order crosses the Best Ask (or vice versa). Tracks executed volume and updates book liquidity.
-*   **Sharded Architecture:** Events are hashed by Symbol ID to specific queues. This guarantees strict ordering per symbol and allows the `OrderBook` to be updated without locks (Single Writer Principle).
-*   **O(1) Order Book:** Replaced standard `std::map` with a flat vector (Direct Address Table) for constant-time insertions and updates, maximizing CPU cache locality.
-*   **Optimized Bounded Queue:** Uses `std::mutex` and `std::condition_variable` with **conditional notification** (only waking threads when necessary) to minimize system calls and jitter.
-*   **Low Latency:** Achieves **~3us median** and **~8us tail (p99)** latency on standard hardware.
-*   **Memory Safety:** Uses `std::unique_ptr` for resource management and `alignas(64)` to prevent false sharing between threads.
+This project simulates a high-frequency trading environment where market data events (orders) are generated and processed concurrently.
 
-**Backpressure:** The bounded queue enforces flow control, ensuring producers slow down if consumers cannot keep up, preventing data loss.
+*   **Engine (C++)**: The core logic. It uses a producer-consumer pattern with lock-free queues to process events. It maintains an order book for multiple stock symbols (e.g., AAPL, MSFT), matches trades, and calculates latency metrics.
+*   **Backend (Node.js)**: Acts as a bridge. It spawns the C++ engine process, parses its standard output (JSON), and broadcasts updates to the frontend via WebSockets.
+*   **Frontend (React)**: A real-time dashboard displaying throughput, processing stats, and a live log of executed trades.
 
-**Throughput** is the number of events processed per second. The engine prints throughput and latency percentiles after running.
-
-## Build & Run (Windows MSYS2)
+## Project Structure
 
 ```
-pacman -Syu --needed cmake ninja gcc
-cmake -S . -B build -G Ninja
-cmake --build build
-./build/market_data_engine.exe
+concurrent-market-data-engine/
+├── engine/         # C++ core logic (Producers, Consumers, OrderBook)
+├── backend/        # Node.js Express server & Socket.io
+└── frontend/       # React.js dashboard
 ```
 
-## Output Example
-```
-Duration: 10.00 s
-Produced: 12345678, Processed: 12345678
-Trades Executed: 45231
-Throughput: 1234567.89 events/sec
-p50 latency: 12 us
-p99 latency: 45 us
-Latency samples: 2000000
+## Features
+
+*   **High Performance**: C++20 engine using `std::atomic` and lock-free data structures.
+*   **Concurrency**: Multi-threaded architecture with sharded processing queues to minimize contention.
+*   **Order Matching**: Simulates a limit order book with trade execution logic.
+*   **Real-time Visualization**: Live updates of throughput (events/sec), total processed events, and trade execution logs.
+*   **Interactive Control**: Ability to restart the simulation from the web interface.
+
+## Setup and Running
+
+### Prerequisites
+*   C++ Compiler (GCC/MinGW)
+*   CMake
+*   Node.js & npm
+
+### 1. Build the C++ Engine
+```bash
+cd engine
+mkdir build
+cd build
+cmake .. -G "MinGW Makefiles"
+cmake --build .
 ```
 
-## Future Work
-- Multi-producer/multi-consumer support
-- Lock-free SPSC queue
-- Event conflation (latest-only per symbol)
+### 2. Start the Backend
+```bash
+cd backend
+npm install
+node server.js
+```
+The backend will launch the C++ executable and listen on port 4000.
+
+### 3. Start the Frontend
+```bash
+cd frontend
+npm install
+npm start
+```
+Open http://localhost:3000 to view the dashboard.
