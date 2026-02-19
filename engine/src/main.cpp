@@ -1,3 +1,5 @@
+#include <thread>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <ios>
@@ -104,11 +106,12 @@ void consumer(EventQueue& queue, vector<uint64_t>& latencies) {
         for (const auto& t : trades) {
             // Log significant trades for the frontend (throttle to avoid IO bottleneck)
             if (t.quantity > 500) {
-                printf("{\"symbol\": \"%s\", \"side\": \"%c\", \"price\": %.2f, \"quantity\": %u}\n", 
-                    STOCK_SYMBOLS[e.symbol_id % STOCK_SYMBOLS.size()].c_str(), 
-                    (static_cast<int>(e.side) == 0 ? 'B' : 'S'), 
-                    t.price, 
-                    t.quantity);
+                // Use cout for consistency and to avoid mixing I/O streams
+                cout << "{\"symbol\": \"" << STOCK_SYMBOLS[e.symbol_id % STOCK_SYMBOLS.size()]
+                     << "\", \"side\": \"" << (e.side == Side::Buy ? 'B' : 'S')
+                     << "\", \"price\": " << fixed << setprecision(2) << t.price
+                     << ", \"quantity\": " << t.quantity
+                     << "}\n";
             }
         }
 
@@ -124,17 +127,24 @@ void consumer(EventQueue& queue, vector<uint64_t>& latencies) {
 }
 
 void stats_printer(atomic<bool>& stop_flag, atomic<uint64_t>& total_processed, atomic<uint64_t>& total_trades) {
-    uint64_t last_processed = 0;
+    auto last_time = chrono::steady_clock::now();
+    uint64_t last_processed = total_processed.load(memory_order_relaxed);
+
     while (!stop_flag.load()) {
         this_thread::sleep_for(chrono::milliseconds(200)); // Update 5 times a second for smooth UI
-        uint64_t now = total_processed.load();
-        uint64_t trades = total_trades.load();
-        uint64_t diff = now - last_processed;
+        
+        auto now_time = chrono::steady_clock::now();
+        uint64_t current_processed = total_processed.load(memory_order_relaxed);
+        uint64_t current_trades = total_trades.load(memory_order_relaxed);
+
+        double duration_sec = chrono::duration<double>(now_time - last_time).count();
+        uint64_t processed_diff = current_processed - last_processed;
+        uint64_t throughput = (duration_sec > 0) ? static_cast<uint64_t>(processed_diff / duration_sec) : 0;
         
         // Output JSON for the Node.js backend to parse
-        // Throughput = diff * 5 (since we sleep 200ms)
-        cout << "{\"processed\": " << now << ", \"trades\": " << trades << ", \"throughput\": " << (diff * 5) << "}" << endl;
-        last_processed = now;
+        cout << "{\"processed\": " << current_processed << ", \"trades\": " << current_trades << ", \"throughput\": " << throughput << "}" << endl;
+        last_processed = current_processed;
+        last_time = now_time;
     }
 }
 
@@ -176,7 +186,7 @@ int main() {
 
     MetricsResult metrics = compute_metrics(latencies, total_processed, duration);
 
-    cout << fixed << setprecision(2);
+    cout << "\n--- Final Results ---\n" << fixed << setprecision(2);
     cout << "Duration: " << duration << " s\n";
     cout << "Produced: " << total_produced << ", Processed: " << total_processed << "\n";
     cout << "Trades Executed: " << total_trades << "\n";

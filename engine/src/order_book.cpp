@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <vector>
 #include "order_book.hpp"
 
 OrderBook::OrderBook() 
