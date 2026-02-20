@@ -1,6 +1,6 @@
 # Concurrent Market Data Engine
 
-A high-performance, concurrent market data processing engine built with C++, visualized in real-time using a Node.js backend and React frontend.
+A high-performance, concurrent market data processing engine built with C++, visualised in real-time using a Node.js backend and React frontend.
 
 ## Overview
 
@@ -22,9 +22,9 @@ concurrent-market-data-engine/
 ## Features
 
 *   **High Performance**: C++20 engine using `std::atomic` and lock-free data structures.
-*   **Concurrency**: Multi-threaded architecture with sharded processing queues to minimize contention.
+*   **Concurrency**: Multi-threaded architecture with sharded processing queues to minimise contention.
 *   **Order Matching**: Simulates a limit order book with trade execution logic.
-*   **Real-time Visualization**: Live updates of throughput (events/sec), total processed events, and trade execution logs.
+*   **Real-time Visualisation**: Live updates of throughput (events/sec), total processed events, and trade execution logs.
 *   **Interactive Control**: Ability to restart the simulation from the web interface.
 
 ## Setup and Running
