@@ -17,7 +17,6 @@
 #include <thread>
 #include <vector>
 
-
 using namespace std;
 
 using EventQueue = BoundedQueue<Event>;
@@ -60,6 +59,12 @@ void producer(int producer_id, vector<unique_ptr<EventQueue>> &queues) {
   uint64_t id = 0;
   uint64_t local_produced_count = 0;
 
+  constexpr size_t BATCH_SIZE = 64;
+  vector<vector<Event>> local_buffers(queues.size());
+  for (auto &buf : local_buffers) {
+    buf.reserve(BATCH_SIZE);
+  }
+
   while (!stop_flag.load(memory_order_relaxed)) {
     Event e;
     e.id = id++;
@@ -76,13 +81,30 @@ void producer(int producer_id, vector<unique_ptr<EventQueue>> &queues) {
     // All events for "AAPL" must go to the same queue.
     size_t queue_idx = e.symbol_id % queues.size();
 
-    if (!queues[queue_idx]->push(e))
-      break;
+    // Append to thread-local buffer
+    local_buffers[queue_idx].push_back(e);
+
+    // Flush batch when buffer is full
+    if (local_buffers[queue_idx].size() == BATCH_SIZE) {
+      if (!queues[queue_idx]->push_batch(local_buffers[queue_idx]))
+        break;
+      local_buffers[queue_idx].clear();
+    }
 
     // Batch atomic updates to reduce bus contention
     if (++local_produced_count % 1024 == 0)
       total_produced.fetch_add(1024, memory_order_relaxed);
   }
+
+  // Flush any remaining buffered events on thread exit
+  for (size_t i = 0; i < local_buffers.size(); ++i) {
+    if (!local_buffers[i].empty()) {
+      // It's safe if push_batch fails here because we are stopping anyway
+      queues[i]->push_batch(local_buffers[i]);
+      local_buffers[i].clear();
+    }
+  }
+
   total_produced.fetch_add(local_produced_count % 1024, memory_order_relaxed);
 }
 
